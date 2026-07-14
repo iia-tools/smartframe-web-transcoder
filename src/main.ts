@@ -9,7 +9,7 @@ if (!app) throw new Error('앱을 시작하지 못했습니다.');
 app.innerHTML = `
   <section class="shell">
     <header><span class="mark">SF</span><div><p>SmartFrame 도구</p><h1>브라우저 영상 변환</h1></div></header>
-    <div class="privacy"><strong>영상은 외부 서버로 전송되지 않습니다.</strong><span>이 기기가 같은 Wi-Fi의 스마트프레임에서 직접 읽고 다시 저장합니다. 브라우저가 물으면 로컬 네트워크 접근을 허용해 주세요.</span></div>
+    <div class="privacy"><strong>영상은 외부 서버로 전송되지 않습니다.</strong><span>SmartFrame 관리 페이지가 선택한 영상만 이 변환 창에 안전하게 전달하고, 완성된 사본을 프레임에 다시 저장합니다.</span></div>
     <article class="card">
       <div class="file-icon" aria-hidden="true">▶</div>
       <div><p class="eyebrow" id="phase">연결 확인</p><h2 id="fileName">변환할 영상을 확인하고 있습니다…</h2><p id="detail">창을 닫지 마세요.</p></div>
