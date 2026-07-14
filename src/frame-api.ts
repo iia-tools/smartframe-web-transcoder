@@ -11,8 +11,6 @@ export type Job = {
   remote_path: string;
 };
 
-type ApiResponse = { ok: boolean; message?: string; error?: string; job?: Job };
-
 type BridgeResponse = {
   type: 'smartframe-transcode-response';
   id: string;
@@ -41,8 +39,8 @@ class OpenerBridge {
   }
 
   static create(session: LaunchSession): OpenerBridge | null {
-    if (!session.bridgeUrl || !window.opener) return null;
-    return new OpenerBridge(session as LaunchSession & { bridgeUrl: string }, window.opener);
+    if (!window.opener) return null;
+    return new OpenerBridge(session, window.opener);
   }
 
   request(operation: string, payload: Record<string, unknown> = {}, transfer: Transferable[] = []): Promise<BridgeResponse> {
@@ -78,10 +76,14 @@ class OpenerBridge {
 }
 
 export class FrameApi {
-  private readonly bridge: OpenerBridge | null;
+  private readonly bridge: OpenerBridge;
 
   constructor(private readonly session: LaunchSession) {
-    this.bridge = OpenerBridge.create(session);
+    const bridge = OpenerBridge.create(session);
+    if (!bridge) {
+      throw new Error('SmartFrame 관리 페이지가 닫혔습니다. 파일 관리자에서 변환을 다시 시작해 주세요.');
+    }
+    this.bridge = bridge;
   }
 
   inputUrl(): string {
@@ -96,20 +98,14 @@ export class FrameApi {
         ...(extra.headers ?? {}),
       },
     };
-    if (location.origin !== this.session.frameUrl) {
-      // Chrome uses this hint to show its Local Network Access permission prompt.
-      request.targetAddressSpace = 'local';
-    }
     return request as RequestInit;
   }
 
   async job(): Promise<Job> {
-    if (this.bridge) return this.bridgeJob('job');
-    return this.request('/api/browser-transcode/job', { method: 'GET' });
+    return this.bridgeJob('job');
   }
 
   inputFetch(inputBytes: number): typeof fetch | undefined {
-    if (!this.bridge) return undefined;
     if (!Number.isSafeInteger(inputBytes) || inputBytes <= 0 || inputBytes > 512 * 1024 * 1024) {
       throw new Error('변환할 영상 크기가 올바르지 않습니다.');
     }
@@ -139,62 +135,28 @@ export class FrameApi {
   }
 
   async uploadChunk(offset: number, chunk: Uint8Array): Promise<Job> {
-    if (this.bridge) {
-      const buffer = chunk.slice().buffer;
-      const response = await this.bridge.request('upload-chunk', { offset, buffer }, [buffer]);
-      if (!response.job) throw new Error('스마트프레임의 저장 진행 상태가 없습니다.');
-      return response.job;
-    }
-    return this.request('/api/browser-transcode/chunk', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/octet-stream',
-        'X-SmartFrame-Chunk-Offset': String(offset),
-      },
-      body: chunk as BodyInit,
-    });
+    const buffer = chunk.slice().buffer;
+    const response = await this.bridge.request('upload-chunk', { offset, buffer }, [buffer]);
+    if (!response.job) throw new Error('스마트프레임의 저장 진행 상태가 없습니다.');
+    return response.job;
   }
 
   async complete(): Promise<Job> {
-    if (this.bridge) return this.bridgeJob('complete');
-    return this.request('/api/browser-transcode/complete', { method: 'POST' });
+    return this.bridgeJob('complete');
   }
 
   async cancel(): Promise<void> {
     try {
-      if (this.bridge) {
-        await this.bridgeJob('cancel');
-        return;
-      }
-      await this.request('/api/browser-transcode/cancel', { method: 'POST' });
+      await this.bridgeJob('cancel');
     } catch {
       // The capability may already have expired; local cancellation still succeeds.
     }
   }
 
   private async bridgeJob(operation: 'job' | 'complete' | 'cancel'): Promise<Job> {
-    if (!this.bridge) throw new Error('스마트프레임 변환 중계를 사용할 수 없습니다.');
     const response = await this.bridge.request(operation);
     if (!response.job) throw new Error('스마트프레임의 변환 작업 정보가 없습니다.');
     return response.job;
   }
 
-  private async request(path: string, init: RequestInit): Promise<Job> {
-    let response: Response;
-    try {
-      response = await fetch(`${this.session.frameUrl}${path}`, this.requestInit(init));
-    } catch {
-      throw new Error('스마트프레임에 연결하지 못했습니다. 같은 Wi-Fi인지 확인하고, 브라우저 주소창의 로컬 네트워크 접근 요청을 허용해 주세요.');
-    }
-    let data: ApiResponse;
-    try {
-      data = await response.json() as ApiResponse;
-    } catch {
-      throw new Error('스마트프레임 응답을 읽지 못했습니다. 같은 Wi-Fi인지 확인해 주세요.');
-    }
-    if (!response.ok || !data.ok || !data.job) {
-      throw new Error(data.message || data.error || `스마트프레임 요청에 실패했습니다 (${response.status}).`);
-    }
-    return data.job;
-  }
 }

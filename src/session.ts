@@ -1,6 +1,6 @@
 export type LaunchSession = {
   frameUrl: string;
-  bridgeUrl?: string;
+  bridgeUrl: string;
   token: string;
 };
 
@@ -24,7 +24,9 @@ export function parseLaunchSession(fragment: string): LaunchSession {
   if (frame.protocol !== 'http:' || !allowedHost || frame.username || frame.password || frame.pathname !== '/') {
     throw new Error('같은 LAN에 있는 스마트프레임 주소만 사용할 수 있습니다.');
   }
-  if (!rawBridge) return { frameUrl: frame.origin, token };
+  if (!rawBridge) {
+    throw new Error('SmartFrame 관리 페이지의 안전한 변환 중계 정보가 없습니다. 파일 관리자에서 다시 시작해 주세요.');
+  }
   let bridge: URL;
   try {
     bridge = new URL(rawBridge);
