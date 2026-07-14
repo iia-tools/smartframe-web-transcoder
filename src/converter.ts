@@ -13,6 +13,19 @@ import { FrameApi, type Job } from './frame-api';
 
 const UPLOAD_CHUNK_BYTES = 4 * 1024 * 1024;
 
+export function fitWithinLongEdge(
+  squarePixelWidth: number,
+  squarePixelHeight: number,
+  rotation: number,
+  limit = 1280,
+): { width?: number; height?: number } {
+  const quarterTurn = Math.abs(rotation) % 180 === 90;
+  const displayWidth = quarterTurn ? squarePixelHeight : squarePixelWidth;
+  const displayHeight = quarterTurn ? squarePixelWidth : squarePixelHeight;
+  if (Math.max(displayWidth, displayHeight) <= limit) return {};
+  return displayWidth >= displayHeight ? { width: limit } : { height: limit };
+}
+
 export type ConversionProgress = {
   phase: 'checking' | 'converting' | 'saving' | 'complete';
   progress: number;
@@ -97,15 +110,15 @@ export class BrowserConverter {
         video: async (track): Promise<ConversionVideoOptions> => {
           const width = await track.getSquarePixelWidth();
           const height = await track.getSquarePixelHeight();
-          const resize = Math.max(width, height) > 1280
-            ? (width >= height ? { width: 1280 } : { height: 1280 })
-            : {};
+          const rotation = await track.getRotation();
+          const resize = fitWithinLongEdge(width, height, rotation);
           return {
             ...resize,
             codec: 'avc',
             bitrate: 4_000_000,
             keyFrameInterval: 2,
             hardwareAcceleration: 'prefer-hardware',
+            allowRotationMetadata: false,
             forceTranscode: true,
           };
         },
