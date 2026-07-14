@@ -86,12 +86,13 @@ async function bootstrap(): Promise<void> {
     elements.status.textContent = '이 기기의 GPU가 지원하면 10비트 HEVC도 변환할 수 있습니다.';
     elements.start.disabled = false;
     converter = new BrowserConverter(api, update);
+    void startConversion();
   } catch (error) {
     showError(error);
   }
 }
 
-elements.start.addEventListener('click', async () => {
+async function startConversion(): Promise<void> {
   if (!converter || !job) return;
   elements.start.disabled = true;
   elements.cancel.hidden = false;
@@ -102,7 +103,9 @@ elements.start.addEventListener('click', async () => {
   } catch (error) {
     showError(error);
   }
-});
+}
+
+elements.start.addEventListener('click', () => void startConversion());
 
 elements.cancel.addEventListener('click', async () => {
   elements.cancel.disabled = true;
