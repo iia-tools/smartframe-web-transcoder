@@ -21,15 +21,18 @@ export class FrameApi {
   }
 
   requestInit(extra: RequestInit = {}): RequestInit {
-    return {
+    const request: RequestInit & { targetAddressSpace?: 'local' } = {
       ...extra,
       headers: {
         'X-SmartFrame-Job-Token': this.session.token,
         ...(extra.headers ?? {}),
       },
-      // Chromium Local Network Access. Unknown browsers safely ignore this field.
-      targetAddressSpace: 'local',
-    } as RequestInit;
+    };
+    if (location.origin !== this.session.frameUrl) {
+      // Fallback for opening GitHub Pages directly. The frame-hosted shell is same-origin.
+      request.targetAddressSpace = 'local';
+    }
+    return request as RequestInit;
   }
 
   async job(): Promise<Job> {
@@ -60,7 +63,12 @@ export class FrameApi {
   }
 
   private async request(path: string, init: RequestInit): Promise<Job> {
-    const response = await fetch(`${this.session.frameUrl}${path}`, this.requestInit(init));
+    let response: Response;
+    try {
+      response = await fetch(`${this.session.frameUrl}${path}`, this.requestInit(init));
+    } catch {
+      throw new Error('스마트프레임에 연결하지 못했습니다. 같은 Wi-Fi인지 확인하고, 브라우저 주소창의 로컬 네트워크 접근 요청을 허용해 주세요.');
+    }
     let data: ApiResponse;
     try {
       data = await response.json() as ApiResponse;
