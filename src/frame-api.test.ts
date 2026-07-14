@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FrameApi, type Job } from './frame-api';
 
 const TOKEN = 'b'.repeat(64);
-const BRIDGE = 'http://192.168.50.178:8088';
-const FRAME = 'http://192.168.50.178:8090';
+const BRIDGE = 'http://192.168.1.50:8088';
+const FRAME = 'http://192.168.1.50:8090';
 const JOB: Job = {
   state: 'ready', message: 'ready', file_name: 'sample.mp4', input_bytes: 20,
   output_name: 'sample-smartframe.mp4', received_bytes: 0,
