@@ -9,7 +9,7 @@ if (!app) throw new Error('앱을 시작하지 못했습니다.');
 app.innerHTML = `
   <section class="shell">
     <header><span class="mark">SF</span><div><p>SmartFrame 도구</p><h1>브라우저 영상 변환</h1></div></header>
-    <div class="privacy"><strong>영상은 외부 서버로 전송되지 않습니다.</strong><span>이 기기가 같은 Wi-Fi의 스마트프레임에서 직접 읽고 다시 저장합니다.</span></div>
+    <div class="privacy"><strong>영상은 외부 서버로 전송되지 않습니다.</strong><span>이 기기가 같은 Wi-Fi의 스마트프레임에서 직접 읽고 다시 저장합니다. 브라우저가 물으면 로컬 네트워크 접근을 허용해 주세요.</span></div>
     <article class="card">
       <div class="file-icon" aria-hidden="true">▶</div>
       <div><p class="eyebrow" id="phase">연결 확인</p><h2 id="fileName">변환할 영상을 확인하고 있습니다…</h2><p id="detail">창을 닫지 마세요.</p></div>
@@ -19,7 +19,7 @@ app.innerHTML = `
       <button id="cancel" class="secondary" type="button" hidden>취소</button>
       <p class="status" id="status" role="status" aria-live="polite"></p>
     </article>
-    <details><summary>변환 방식과 제한</summary><ul><li>긴 변 1280px, H.264, AAC MP4 사본을 만듭니다.</li><li>원본 영상은 그대로 유지됩니다.</li><li>변환 성능과 10비트 HEVC 지원 여부는 이 기기의 브라우저와 GPU에 따라 달라집니다.</li><li>10분짜리 일회용 권한은 선택한 영상 한 편에만 사용할 수 있습니다.</li></ul></details>
+    <details><summary>변환 방식과 제한</summary><ul><li>긴 변 1280px, H.264, AAC MP4 사본을 만듭니다.</li><li>원본 영상은 그대로 유지됩니다.</li><li>하드웨어 가속을 우선하며, 사용할 수 없으면 브라우저가 지원하는 소프트웨어 처리를 사용합니다.</li><li>10비트 HEVC 지원 여부는 이 기기의 브라우저와 운영체제에 따라 달라집니다.</li><li>10분짜리 일회용 권한은 선택한 영상 한 편에만 사용할 수 있습니다.</li></ul></details>
   </section>`;
 
 const elements = {

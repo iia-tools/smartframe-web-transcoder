@@ -29,7 +29,7 @@ export class FrameApi {
       },
     };
     if (location.origin !== this.session.frameUrl) {
-      // Fallback for opening GitHub Pages directly. The frame-hosted shell is same-origin.
+      // Chrome uses this hint to show its Local Network Access permission prompt.
       request.targetAddressSpace = 'local';
     }
     return request as RequestInit;

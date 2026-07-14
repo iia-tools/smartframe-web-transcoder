@@ -68,7 +68,7 @@ export class BrowserConverter {
 
   async run(): Promise<Job> {
     if (typeof VideoDecoder === 'undefined' || typeof VideoEncoder === 'undefined') {
-      throw new Error('이 브라우저는 하드웨어 영상 변환을 지원하지 않습니다. 최신 Chrome 또는 Edge를 사용해 주세요.');
+      throw new Error('이 브라우저에서는 영상 변환 기능(WebCodecs)을 사용할 수 없습니다. HTTPS로 열린 최신 Chrome 또는 Edge에서 다시 시도해 주세요.');
     }
     const job = await this.api.job();
     this.emit(job, 'checking', 0, 0, 0);
