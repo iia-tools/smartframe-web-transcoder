@@ -1,5 +1,6 @@
 export type LaunchSession = {
   frameUrl: string;
+  bridgeUrl?: string;
   token: string;
 };
 
@@ -9,6 +10,7 @@ export function parseLaunchSession(fragment: string): LaunchSession {
   const params = new URLSearchParams(fragment.replace(/^#/, ''));
   const token = params.get('token')?.trim() ?? '';
   const rawFrame = params.get('frame')?.trim() ?? '';
+  const rawBridge = params.get('bridge')?.trim() ?? '';
   if (!/^[a-f0-9]{64}$/.test(token)) {
     throw new Error('변환 권한이 없거나 올바르지 않습니다. 스마트프레임 파일 관리자에서 다시 시작해 주세요.');
   }
@@ -22,5 +24,19 @@ export function parseLaunchSession(fragment: string): LaunchSession {
   if (frame.protocol !== 'http:' || !allowedHost || frame.username || frame.password || frame.pathname !== '/') {
     throw new Error('같은 LAN에 있는 스마트프레임 주소만 사용할 수 있습니다.');
   }
-  return { frameUrl: frame.origin, token };
+  if (!rawBridge) return { frameUrl: frame.origin, token };
+  let bridge: URL;
+  try {
+    bridge = new URL(rawBridge);
+  } catch {
+    throw new Error('스마트프레임 관리 페이지 주소가 올바르지 않습니다.');
+  }
+  const safeBridge = bridge.protocol === 'http:'
+    && bridge.hostname === frame.hostname
+    && !bridge.username && !bridge.password
+    && bridge.pathname === '/' && !bridge.search && !bridge.hash;
+  if (!safeBridge) {
+    throw new Error('변환 중계 주소가 스마트프레임과 일치하지 않습니다.');
+  }
+  return { frameUrl: frame.origin, bridgeUrl: bridge.origin, token };
 }

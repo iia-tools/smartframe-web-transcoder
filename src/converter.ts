@@ -85,6 +85,7 @@ export class BrowserConverter {
     }
     const job = await this.api.job();
     this.emit(job, 'checking', 0, 0, 0);
+    const bridgedFetch = this.api.inputFetch(job.input_bytes);
     let uploadedBytes = 0;
     const uploader = new ChunkUploader(this.api, (bytes) => {
       uploadedBytes = bytes;
@@ -94,8 +95,9 @@ export class BrowserConverter {
       formats: ALL_FORMATS,
       source: new UrlSource(this.api.inputUrl(), {
         requestInit: this.api.requestInit(),
+        fetchFn: bridgedFetch,
         maxCacheSize: 48 * 1024 * 1024,
-        parallelism: 2,
+        parallelism: bridgedFetch ? 1 : 2,
       }),
     });
     const output = new Output({
