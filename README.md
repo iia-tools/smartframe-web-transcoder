@@ -27,6 +27,7 @@ npm run dev
 
 - 최신 Chrome·Edge의 WebCodecs 권장
 - Chrome·Edge에서 표시되는 로컬 네트워크 접근 요청을 허용해야 함
+- 광고 차단·보안 앱이 웹 트래픽을 필터링하면 GitHub Pages와 프레임 LAN 주소를 예외로 허용해야 할 수 있음
 - 입력 HEVC Main 10 디코딩 지원 여부는 운영체제·GPU·브라우저에 따라 다름
 - Safari와 Firefox는 필요한 WebCodecs 코덱 지원이 없을 수 있음
 - DRM 영상은 지원하지 않음
