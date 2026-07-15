@@ -39,8 +39,13 @@ class OpenerBridge {
   }
 
   static create(session: LaunchSession): OpenerBridge | null {
-    if (!window.opener) return null;
-    return new OpenerBridge(session, window.opener);
+    const peer = window.opener && !window.opener.closed
+      ? window.opener
+      : window.parent && window.parent !== window
+        ? window.parent
+        : null;
+    if (!peer) return null;
+    return new OpenerBridge(session, peer);
   }
 
   request(operation: string, payload: Record<string, unknown> = {}, transfer: Transferable[] = []): Promise<BridgeResponse> {
@@ -81,7 +86,7 @@ export class FrameApi {
   constructor(private readonly session: LaunchSession) {
     const bridge = OpenerBridge.create(session);
     if (!bridge) {
-      throw new Error('SmartFrame 관리 페이지가 닫혔습니다. 파일 관리자에서 변환을 다시 시작해 주세요.');
+      throw new Error('SmartFrame 관리 페이지 연결을 찾지 못했습니다. 파일 관리자에서 변환을 다시 시작해 주세요.');
     }
     this.bridge = bridge;
   }

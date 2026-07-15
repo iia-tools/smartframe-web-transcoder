@@ -18,7 +18,7 @@ type RequestMessage = {
   end?: number;
 };
 
-function bridgedApi(onRequest?: (message: RequestMessage) => Record<string, unknown>) {
+function bridgedApi(onRequest?: (message: RequestMessage) => Record<string, unknown>, embedded = false) {
   let receive: ((event: MessageEvent) => void) | undefined;
   const opener = {
     closed: false,
@@ -31,12 +31,14 @@ function bridgedApi(onRequest?: (message: RequestMessage) => Record<string, unkn
       } as unknown as MessageEvent);
     }),
   };
-  vi.stubGlobal('window', {
-    opener,
+  const browserWindow: Record<string, unknown> = {
+    opener: embedded ? null : opener,
     addEventListener: (_type: string, listener: (event: MessageEvent) => void) => { receive = listener; },
     setTimeout,
     clearTimeout,
-  });
+  };
+  browserWindow.parent = embedded ? opener : browserWindow;
+  vi.stubGlobal('window', browserWindow);
   return { api: new FrameApi({ frameUrl: FRAME, bridgeUrl: BRIDGE, token: TOKEN }), opener };
 }
 
@@ -45,6 +47,14 @@ afterEach(() => vi.unstubAllGlobals());
 describe('FrameApi management-page bridge', () => {
   it('loads a job through the opener instead of the LAN converter port', async () => {
     const { api, opener } = bridgedApi();
+    await expect(api.job()).resolves.toEqual(JOB);
+    expect(opener.postMessage).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'smartframe-transcode-request', operation: 'job', token: TOKEN,
+    }), BRIDGE, []);
+  });
+
+  it('loads a job through the parent when the converter is embedded', async () => {
+    const { api, opener } = bridgedApi(undefined, true);
     await expect(api.job()).resolves.toEqual(JOB);
     expect(opener.postMessage).toHaveBeenCalledWith(expect.objectContaining({
       type: 'smartframe-transcode-request', operation: 'job', token: TOKEN,
